@@ -1,0 +1,131 @@
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::middleware(['auth'])
+    ->get('/dashboard', function () {
+        return view('dashboard');
+    })
+    ->name('dashboard');
+
+require __DIR__ . '/auth.php';
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name(
+        'profile.edit'
+    );
+    Route::patch('/profile', [ProfileController::class, 'update'])->name(
+        'profile.update'
+    );
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name(
+        'profile.destroy'
+    );
+});
+
+Route::prefix('/')
+    ->middleware('auth')
+    ->group(function () {
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);
+
+        Route::resource('utilisateurs', UtilisateurController::class);
+        Route::resource('caisses', CaisseController::class);
+        Route::resource('mode-paiements', ModePaiementController::class);
+        Route::resource('transactions', TransactionController::class);
+        Route::resource('frequences', FrequenceController::class);
+        Route::resource(
+            'structure-financieres',
+            StructureFinanciereController::class
+        );
+        Route::resource('type-caisses', TypeCaisseController::class);
+        Route::resource('communes', CommuneController::class);
+        Route::resource('departements', DepartementController::class);
+    });
+
+
+
+///////// ROUTES API BOX ////////
+
+
+Route::post('/login', [AuthController::class, 'login'])->name('api.login');
+
+Route::middleware('auth:sanctum')
+    ->get('/user', function (Request $request) {
+        return $request->user();
+    })
+    ->name('api.user');
+
+Route::name('api.')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('roles', RoleController::class);
+        Route::apiResource('permissions', PermissionController::class);
+
+        Route::apiResource('utilisateurs', UtilisateurController::class);
+
+        // Utilisateur Caisses
+        Route::get('/utilisateurs/{utilisateur}/caisses', [
+            UtilisateurCaissesController::class,
+            'index',
+        ])->name('utilisateurs.caisses.index');
+        Route::post('/utilisateurs/{utilisateur}/caisses', [
+            UtilisateurCaissesController::class,
+            'store',
+        ])->name('utilisateurs.caisses.store');
+
+        // Utilisateur Mode Paiements
+        Route::get('/utilisateurs/{utilisateur}/mode-paiements', [
+            UtilisateurModePaiementsController::class,
+            'index',
+        ])->name('utilisateurs.mode-paiements.index');
+        Route::post('/utilisateurs/{utilisateur}/mode-paiements', [
+            UtilisateurModePaiementsController::class,
+            'store',
+        ])->name('utilisateurs.mode-paiements.store');
+
+        Route::apiResource('caisses', CaisseController::class);
+
+        // Caisse Transactions
+        Route::get('/caisses/{caisse}/transactions', [
+            CaisseTransactionsController::class,
+            'index',
+        ])->name('caisses.transactions.index');
+        Route::post('/caisses/{caisse}/transactions', [
+            CaisseTransactionsController::class,
+            'store',
+        ])->name('caisses.transactions.store');
+
+        Route::apiResource('mode-paiements', ModePaiementController::class);
+
+        Route::apiResource('transactions', TransactionController::class);
+
+        Route::apiResource('frequences', FrequenceController::class);
+
+        Route::apiResource('communes', CommuneController::class);
+
+        // Commune Structure Financieres
+        Route::get('/communes/{commune}/structure-financieres', [
+            CommuneStructureFinancieresController::class,
+            'index',
+        ])->name('communes.structure-financieres.index');
+        Route::post(
+            '/communes/{commune}/structure-financieres/{structureFinanciere}',
+            [CommuneStructureFinancieresController::class, 'store']
+        )->name('communes.structure-financieres.store');
+        Route::delete(
+            '/communes/{commune}/structure-financieres/{structureFinanciere}',
+            [CommuneStructureFinancieresController::class, 'destroy']
+        )->name('communes.structure-financieres.destroy');
+
+        Route::apiResource('departements', DepartementController::class);
+
+        // Departement Communes
+        Route::get('/departements/{departement}/communes', [
+            DepartementCommunesController::class,
+            'index',
+        ])->name('departements.communes.index');
+        Route::post('/departements/{departement}/communes', [
+            DepartementCommunesController::class,
+            'store',
+        ])->name('departements.communes.store');
+    });
